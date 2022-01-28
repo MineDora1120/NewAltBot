@@ -9,12 +9,12 @@ const request = require('request')
 const mdlog = "https://static.wixstatic.com/media/bcc14d_14c8ed70b93447c6acda2a536bdaac78~mv2.jpg/v1/fill/w_134,h_134,al_c,q_80,usm_0.66_1.00_0.01/images.webp"
 const img = "https://static.wixstatic.com/media/bcc14d_3e3c3489f7dd45759fc0d6b01fe1a270~mv2.jpg/v1/fill/w_339,h_313,al_c,q_80,usm_0.66_1.00_0.01/KakaoTalk_20210804_170059173.webp"
 const boturi = "https://mydodo1120.wixsite.com/mdsoft/home"
-const token = "ODA0MzExNTMwNTE4MzQ3ODI2.YBKffA.TDYvwmFreaff-W83KYR86co7r1Y"
+const token = "" //토큰을 입력하세요.
 const Youtube = require('youtube-node');
 //const { url } = require('inspector');
 const youtube = new Youtube();
 //YouTube Data API v3 개인key값
-youtube.setKey("AIzaSyCNnMvLcoWfHhnsIXF2LtIBHYpJylhv7iY");
+youtube.setKey("");
 
 //음악 관련 오류 명령어
 
