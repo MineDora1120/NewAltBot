@@ -3,6 +3,7 @@
 
 사용법 - 
  * npm, node.js 모듈을 설치하셔야 사용 가능합니다!
-index.js에서 YouTube Token과 Bot Token을 입력후, 저장하신뒤,
 
+
+* index.js에서 YouTube Token과 Bot Token을 입력후, 저장하신뒤,
 Start.ps1 파일을 실행하세요.
