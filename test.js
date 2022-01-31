@@ -3,7 +3,6 @@ const token = "NjgwMDM0ODY0MzMzODQ4NTkz.Xk6B0g.Aa2GGw7xASYMu3CiSCqCpQ5fw6U"
 const prefix = "!"
 const yts = require('yt-search')
 const ytdl = require("ytdl-core");
-const 
 
 const client = new Discord.Client();
 

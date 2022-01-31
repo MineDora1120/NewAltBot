@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "r": "node index.js",
-    "te": "node test.js"
+    "te": "node test.js",
+    "craft": "node eekta.js"
   },
   "dependencies": {
     "@discordjs/opus": "^0.5.3",
