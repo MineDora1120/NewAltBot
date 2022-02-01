@@ -3,6 +3,8 @@ const token = "NjgwMDM0ODY0MzMzODQ4NTkz.Xk6B0g.Aa2GGw7xASYMu3CiSCqCpQ5fw6U"
 const prefix = "!"
 const yts = require('yt-search')
 const ytdl = require("ytdl-core");
+const  YouTube = require('simple-youtube-api')
+const youtube = new YouTube("AIzaSyCNnMvLcoWfHhnsIXF2LtIBHYpJylhv7iY")
 
 const client = new Discord.Client();
 
@@ -13,19 +15,25 @@ client.on("ready", () => {
 });
 
 client.on("message", async(msg) => {
+
   if(msg.content.startsWith(prefix+"p"||prefix+"play")){
       const args = msg.content.split(" ").slice(1)
+
       if(!args[0]){
           const embed2 = new Discord.MessageEmbed()
           .setTitle('**사용법 `'+prefix+'p 노래이름`**')
           .setColor('RED')
           msg.reply(embed2)
 
-      }else if (msg.member.voice.channel) {
+      } else if (msg.member.voice.channel) {
+       
           const connection = await msg.member.voice.channel.join();
           const search = await yts(args.join(" "))
+        // console.log(search.all)
+          if(search.all[0].type == `video`) {
           const videos = search.videos.slice( 0, 1 )
           videos.forEach(async function(v){
+         
               const views = String(v.views).padStart(10, '')
               const playing = new Discord.MessageEmbed()
               .setTitle("**"+v.title+"**")
@@ -37,16 +45,22 @@ client.on("message", async(msg) => {
                   {name:'**조횟수**',value:views, inline:true}
               )
               .setDescription('유튜브에서 노래를 재생합니다.')
-              dddd = await msg.reply(playing)
-              connection.play(ytdl(v.url,{filter:'audioonly'})).on('finish',()=>{
-                  const end = new Discord.MessageEmbed()
-                  .setTitle('**노래를 종료합니다.**')
-                  .setColor(0x4169e1)
-                  msg.reply(end)
-                  connection.disconnect()
-                  dddd.delete()
-              })
+
+              msg.channel.send(playing)
+              play(v, connection, msg)
+          
           })
+        } else if(search.all[0].type == "list") {
+
+           const lists = await youtube.getPlaylist(search.all[0].url);
+           const videos = await lists.getVideos();
+         //  console.log(videos)
+           const checkNumber = 0
+        console.log(Object.keys(videos.Video))
+           for(const listdata = Object.keys(videos.Video).length; checkNumber == listdata; checkNumber++) {
+             console.log(videos.Video[checkNumber])
+           } console.log("done!")
+        }
       } else {
           const embed = new Discord.MessageEmbed()
           .setTitle('**음성 채널에 먼저 접속해주세요!**')
@@ -94,4 +108,13 @@ client.on("message", async(msg) => {
       msg.reply(embed)
   }
 })
+
+function play(v, connection, msg) {
+    connection.play(ytdl(v.url,{filter:'audioonly'})).on('finish',()=>{
+        const end = new Discord.MessageEmbed()
+        .setTitle('**노래를 종료합니다.**')
+        .setColor(0x4169e1)
+        msg.reply(end)
+    })
+}
 client.login(token)
