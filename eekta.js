@@ -20,4 +20,6 @@ console.log(data.data[0])
 data.data.push("eekta")
 
 data.data.shift();
-console.log(data.data)
+
+
+console.log(Object.values(data).length)

@@ -3,8 +3,14 @@ const token = "NjgwMDM0ODY0MzMzODQ4NTkz.Xk6B0g.Aa2GGw7xASYMu3CiSCqCpQ5fw6U"
 const prefix = "!"
 const yts = require('yt-search')
 const ytdl = require("ytdl-core");
-const  YouTube = require('simple-youtube-api')
-const youtube = new YouTube("AIzaSyCNnMvLcoWfHhnsIXF2LtIBHYpJylhv7iY")
+const PlaylistSummary = require('youtube-playlist-summary')
+
+const config = {
+    GOOGLE_API_KEY: 'AIzaSyCNnMvLcoWfHhnsIXF2LtIBHYpJylhv7iY', // require
+    PLAYLIST_ITEM_KEY: ['title', 'videoUrl'], // option
+  }
+
+const ps = new PlaylistSummary(config)
 
 const client = new Discord.Client();
 
@@ -30,6 +36,30 @@ client.on("message", async(msg) => {
           const connection = await msg.member.voice.channel.join();
           const search = await yts(args.join(" "))
         // console.log(search.all)
+         if (queue.get(msg.guild.id)) {
+            let send = queue.get(msg.guild.id)
+            const videos = search.videos.slice( 0, 1 )
+            videos.forEach(async function(v){
+           
+                const views = String(v.views).padStart(10, '')
+                const listing = new Discord.MessageEmbed()
+                .setTitle("**"+v.title+"**")
+                .setColor(0x4169e1)
+                .setImage(v.thumbnail)
+                .addFields(
+                    {name:'**업로더**',value:`[${v.author.name}](${v.author.url})`,inline:true},
+                    {name:'**길이**',value:v.timestamp, inline:true},
+                    {name:'**조횟수**',value:views, inline:true}
+                )
+                .setDescription('대기열에 추가하였습니다.')
+  
+                msg.channel.send(listing)
+
+                send.url.push(v.url)
+                send.name.push(v.thumbnail)
+                send.author.push(v.author.name)
+            })
+         } else {
           if(search.all[0].type == `video`) {
           const videos = search.videos.slice( 0, 1 )
           videos.forEach(async function(v){
@@ -47,20 +77,37 @@ client.on("message", async(msg) => {
               .setDescription('유튜브에서 노래를 재생합니다.')
 
               msg.channel.send(playing)
-              play(v, connection, msg)
+              const urls = v.url
+              play(urls, connection, msg)
+
+              const SoundQueue = {
+                url : [v.url],
+                name : [v.thumbnail],
+                author : [v.author.name]
+               }
+            queue.set(msg.guild.id,SoundQueue);
           
           })
         } else if(search.all[0].type == "list") {
+            console.log(search.all)
+            const url = search.all[0].listId
+      
+            ps.getPlaylistItems(url)
+            .then((result) => {
+                for (const video of Object.values(result.items)) {
+             
+                } console.log("done!")
+            })
+            .catch((error) => {
+              console.error(error)
+            })
 
-           const lists = await youtube.getPlaylist(search.all[0].url);
-           const videos = await lists.getVideos();
-         //  console.log(videos)
-           const checkNumber = 0
-        console.log(Object.keys(videos.Video))
-           for(const listdata = Object.keys(videos.Video).length; checkNumber == listdata; checkNumber++) {
-             console.log(videos.Video[checkNumber])
-           } console.log("done!")
+        
+      
         }
+    }
+    
+    
       } else {
           const embed = new Discord.MessageEmbed()
           .setTitle('**음성 채널에 먼저 접속해주세요!**')
@@ -109,12 +156,29 @@ client.on("message", async(msg) => {
   }
 })
 
-function play(v, connection, msg) {
-    connection.play(ytdl(v.url,{filter:'audioonly'})).on('finish',()=>{
+function play(urls, connection, msg) {
+    connection.play(ytdl(urls,{filter:'audioonly'})).on('finish',()=>{
+      
+      if(Object.values(queue.get(msg.guild.id).url).length == 1) {
         const end = new Discord.MessageEmbed()
         .setTitle('**노래를 종료합니다.**')
         .setColor(0x4169e1)
         msg.reply(end)
+        queue.delete(msg.guild.id)
+       // msg.channel.send("false")
+        msg.member.voice.channel.leave();
+        console.log("system done")
+      } else {
+          queue.get(msg.guild.id).url.shift();
+          queue.get(msg.guild.id).name.shift();
+          queue.get(msg.guild.id).author.shift();
+          const urls = queue.get(msg.guild.id).url[0]
+     //     msg.channel.send("true")
+          console.log("list done")
+          play(urls, connection, msg)
+      }
     })
 }
+
+
 client.login(token)
