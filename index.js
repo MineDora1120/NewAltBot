@@ -17,9 +17,7 @@ const devtoken = "NjgwMDM0ODY0MzMzODQ4NTkz.Xk6B0g.Aa2GGw7xASYMu3CiSCqCpQ5fw6U"
 const yts = require('yt-search')
 const { release } = require('os');
 //const { url } = require('inspector');
-const youtube = new Youtube();
 //YouTube Data API v3 개인key값
-youtube.setKey("AIzaSyCNnMvLcoWfHhnsIXF2LtIBHYpJylhv7iY");
 
 //음악 관련 오류 명령어
 
@@ -80,7 +78,7 @@ if(dev == "false") {
 releases.setDescription("이 알트봇 시스템은 Public 버전입니다.")
 } else {
   releases.setDescription("이 알트봇 시스템은 Dev 버전입니다. 불안정할 수 있습니다.")
-  message.reply("이 버전을 사용하는건 개발자가 아니면 매우 위험합니다. 모든 오류의 책임은 본인에게 있습니다.")
+ // message.reply("이 버전을 사용하는건 개발자가 아니면 매우 위험합니다. 모든 오류의 책임은 본인에게 있습니다.")
 releases.setTimestamp()
 releases.setFooter('MD BOT',mdlog)
 }
@@ -130,11 +128,12 @@ if(message.content.startsWith("알트야 도움")) {
  __** 💾 알트 봇 명령어:**__
 
   ** > 음악 관련 명령어 **
-  - 알트야 재생 (제목) - 알트가 음성채널에 들어와 검색된 음악을 재생해요.
+  - ap (제목) - 알트가 음성채널에 들어와 검색된 음악을 재생해요.
+   * ap 기능은 (알트야 재생)으로 사용할 수 없어요.
   - 알트야 멈춰 - 알트가 음악을 멈추고, 대기열을 초기화해요.
   - 알트야 스킵 - 알트가 지금 재생중인 음악을 스킵하고, 다음 대기열의 음악을 재생해요!
   - 알트야 목록 - 알트가 음악 대기열을 표시해요.
-  - 알트야 노레방 (제목) - 알트가 이 제목의 MR을 검색해 MR을 재생해요. (이 기능은 정확이 되지 않을 수 있어요!)
+  - 알트야 나가 - 알트를 내보내고, 대기열을 초기화해요.
  
   ** > 게임&잡기능 관련 명령어 **
   - 알트야 자판기 - 알트가 랜덤적으로 음료수를 뽑아요. (결제 : 500원)
@@ -1045,45 +1044,23 @@ if(message.content.startsWith("알트야 도움")) {
       message.channel.send(releases)
     } 
 })
+
+
+const PlaylistSummary = require('youtube-playlist-summary')
+
+const config = {
+    GOOGLE_API_KEY: 'AIzaSyCNnMvLcoWfHhnsIXF2LtIBHYpJylhv7iY', // require
+    PLAYLIST_ITEM_KEY: ['title', 'videoUrl'], // option
+  }
+
+const ps = new PlaylistSummary(config)
+
+
 const queue = new Map();
 
-client.on('message', (message) => { //여기는 대가리 아프니깐 적어둠 (by 마도)
 
-  if (message.author.bot) return;
-  if(message.guild.id == "728441087668256780"){
-    if(dev == "false") {
-      return;
-    }
-   } 
-   
-   const serverQueue = queue.get(message.guild.id);
- 
-   if (message.content.startsWith(`알트야 재생`)) {
-     let args = message.content.slice('알트야 재생 '.length);
-     const connection = await msg.member.voice.channel.join();
-     const search = await yts(args.join(" "))
-     const videos = search.videos.slice( 0, 1 )
-     youtube.addParam('type', 'music');
-     youtube.search(search, 1, function (err, result) {
-      if (err) { let embed = new Discord.MessageEmbed()
-        .setColor("#d9534f")
-            .setAuthor("알트 봇", img)
-            .setTitle("재생 오류")
-            .setDescription(err)
-            .setTimestamp()
-            .setFooter('MD BOT',mdlog)
-      
-          message.channel.send(embed);console.log(err); return; }
-     execute(message, serverQueue, result);
-      });
-     return;
-   } else if (message.content.startsWith(`알트야 스킵`)) {
-     skip(message, serverQueue);
-     return;
-   } else if (message.content.startsWith(`알트야 멈춰`) || message.content.startsWith("알트야 스탑")) {
-     stop(message, serverQueue);
-     return;
-   } else if(message.content.startsWith("알트야 목록")) {
+client.on("message", async(message) => {
+  if(message.content.startsWith("알트야 목록")) {
     if (!serverQueue) { let embed = new Discord.MessageEmbed()
           .setColor("#d9534f")
           .setAuthor("알트 봇", img)
@@ -1095,179 +1072,333 @@ client.on('message', (message) => { //여기는 대가리 아프니깐 적어둠
     let embed = new Discord.MessageEmbed();
     embed.setColor("#13ad65")
     embed.setAuthor("알트 봇", "https://static.wixstatic.com/media/bcc14d_3e3c3489f7dd45759fc0d6b01fe1a270~mv2.jpg/v1/fill/w_339,h_313,al_c,q_80,usm_0.66_1.00_0.01/KakaoTalk_20210804_170059173.webp")
-    embed.setDescription(`${serverQueue.songs.map(song => `**-** ${song.title}`).join('\n')}`)
-    embed.setTitle(`**🎵 현재 재생중 : ** ${serverQueue.songs[0].title}`)
+    embed.setDescription(`${queue.song.map(queue => `**-** ${queue.title}`).join('\n')}`)
+    embed.setTitle(`**🎵 현재 재생중 : ** ${queue.title[0]}`)
     embed.setTimestamp()
     embed.setFooter('MD BOT',mdlog)
 
 		return message.channel.send(embed);
-
-  } else if (message.content.startsWith(`알트야 노래방`)) {
-    let keyword = message.content.slice('알트야 노래방 '.length);
-    const music = 1
-    youtube.addParam('type', 'video');
-    youtube.search(keyword + "inst", 1, function (err, result) {
-     if (err) { let embed = new Discord.MessageEmbed()
-       .setColor("#d9534f")
-           .setAuthor("알트 봇", img)
-           .setTitle("재생 오류")
-           .setDescription(err)
-           .setTimestamp()
-           .setFooter('MD BOT',mdlog)
-     
-         message.channel.send(embed);console.log(err); return; }
-
-     });
-    return;
   }
- });
- 
- async function execute(message, serverQueue, result) {
-   let args = `https://www.youtube.com/watch?v=${result["items"][0]["id"]["videoId"]}`
-   let img = `https://img.youtube.com/vi/${result["items"][0]["id"]["videoId"]}/mqdefault.jpg`
-   const voiceChannel = message.member.voice.channel;
-   if (!voiceChannel)
-     return message.channel.send(
-       "음성 채널에 있어야 재생이 가능해요."
-     );
-   const permissions = voiceChannel.permissionsFor(message.client.user);
-   if (!permissions.has("CONNECT") || !permissions.has("SPEAK")) {
-     return message.channel.send(
-       "이 채널에 관한 권한이 없어요."
-     );
-   }
- 
-   const songInfo = await ytdl.getInfo(args);
-  // console.log(songInfo)
-   const song = {
-         title: songInfo.videoDetails.title,
-         url: songInfo.videoDetails.video_url,
-         img : img
-    };
- 
-   if (!serverQueue) {
-     const queueContruct = {
-       textChannel: message.channel,
-       voiceChannel: voiceChannel,
-       connection: null,
-       songs: [],
-       volume: 5,
-       playing: true
-     };
- 
-     queue.set(message.guild.id, queueContruct);
- 
-     queueContruct.songs.push(song);
- 
-     try {
-       var connection = await voiceChannel.join();
-       queueContruct.connection = connection;
-       play(message.guild, queueContruct.songs[0]);
-      // const guild = message.guild
-     //  const song = queueContruct.songs[0]
-      // play(guild, song);
-     } catch (err) {
-      let embed = new Discord.MessageEmbed()
-      .setColor("#d9534f")
-          .setAuthor("알트 봇", "https://static.wixstatic.com/media/bcc14d_3e3c3489f7dd45759fc0d6b01fe1a270~mv2.jpg/v1/fill/w_339,h_313,al_c,q_80,usm_0.66_1.00_0.01/KakaoTalk_20210804_170059173.webp")
-          .setTitle("재생 오류가 발생했어요.")
-          .setDescription(err)
+  if(message.content.startsWith("ap")){
+   const args = message.content.split(" ").slice(1)
+      if(!args[0]){
+          const embed2 = new Discord.MessageEmbed()
+          .setTitle('**사용법 `'+'ap (노래이름)`**')
+          .setColor('RED')
+          .setAuthor("알트 봇", img)
           .setTimestamp()
           .setFooter('MD BOT',mdlog)
+          
+          message.reply(embed2)
+
+      } else if (message.member.voice.channel) {
+       
+          const connection = await message.member.voice.channel.join();
+          const search = await yts(args.join(" "))
+          if(search.all.length < 3) {
+            const embed2 = new Discord.MessageEmbed()
+            .setTitle('**노래를 찾지 못했어요. 다른 검색어로 다시 시도해주세요.**')
+            .setColor('RED')
+            .setAuthor("알트 봇", img)
+            .setTimestamp()
+            .setFooter('MD BOT',mdlog)
+            
+            message.reply(embed2)
+          } else {
+     //     console.log(search)
+        // console.log(search.all)
+         if (queue.get(message.guild.id)) {
+            let send = queue.get(message.guild.id)
+            const videos = search.videos.slice( 0, 1 )
+            if(search.all[0].type == `video`) {
+            videos.forEach(async function(v){
+                
+               //     console.log("video")
+                const views = String(v.views).padStart(10, '')
+                const listing = new Discord.MessageEmbed()
+                .setTitle("**"+v.title+"**")
+                .setColor("#13ad65")
+                .setImage(v.thumbnail)
+                .addFields(
+                    {name:'**업로더**',value:`[${v.author.name}](${v.author.url})`,inline:true},
+                    {name:'**길이**',value:v.timestamp, inline:true},
+                    {name:'**조횟수**',value:views, inline:true}
+                )
+                .setDescription('이 영상을 대기열에 추가하였어요.')
+                .setAuthor("알트 봇", img)
+                .setTimestamp()
+                .setFooter('MD BOT',mdlog)
+  
+                message.channel.send(listing)
+
+                send.url.push(v.url)
+                send.name.push(v.thumbnail)
+                send.author.push(v.author.name)
+                
+            })
+              } else if(search.all[0].type == `list`) {
+                
+                const url = search.all[0].listId
+            //    console.log("done")
+                ps.getPlaylistItems(url)
+                .then((result) => {
+                 
+                    let send = queue.get(message.guild.id)
+                   // console.log(result)
+                    for(var database of Object.values(result.items)) {
+                    //    console.log(database)
+                        send.url.push(database.videoUrl)
+                        send.name.push(database.title)
+                        send.author.push(search.all[0].author.name) 
     
-        message.channel.send(embed)
-       console.log(err);
-       queue.delete(message.guild.id);
-       return message.channel.send(err);
-     }
-   } else {
-     serverQueue.songs.push(song);
-     let embed = new Discord.MessageEmbed()
-     .setColor("#13ad65")
-     .setAuthor("알트 봇", "https://static.wixstatic.com/media/bcc14d_3e3c3489f7dd45759fc0d6b01fe1a270~mv2.jpg/v1/fill/w_339,h_313,al_c,q_80,usm_0.66_1.00_0.01/KakaoTalk_20210804_170059173.webp")
-     .setTitle(song.title)
-     .setThumbnail(song.img)
-     .setDescription("이 대기열에 추가되었어요.")
-     .setTimestamp()
-     .setFooter('MD BOT',mdlog)
-     return message.channel.send(embed);
-   }
- }
- 
- function skip(message, serverQueue) {
-//   console.log("SKIP");
-   if (!message.member.voice.channel)
-  
-   
-  return message.channel.send(joinerr);
-//   console.log("SKIP1");
- 
-   if (!serverQueue)
+                    }  const listing = new Discord.MessageEmbed()
+                    .setTitle("**"+search.all[0].title+"**")
+                    .setColor("#13ad65")
+                    .setImage(`https://img.youtube.com/vi/${result.items[0].videoId}/mqdefault.jpg`)
+                    .addFields(
+                        {name:'**제작**',value:`[${search.all[0].author.name}](${search.all[0].author.url})`,inline:true},
+                        {name:'**수록된 곡**',value:search.all[0].videoCount, inline:true}
+                    )
+                    .setAuthor("알트 봇", img)
+                    .setTimestamp()
+                    .setFooter('MD BOT',mdlog)
+                    .setDescription('앨범/목록이 대기열에 추가되었어요.')
 
-   return message.channel.send(skiperr);
-//    console.log("SKIP2");
-    serverQueue.songs.shift();
-    play(message.guild, serverQueue.songs[0]);
-    let embed = new Discord.MessageEmbed()
-     .setColor("#13ad65")
-     .setAuthor("알트 봇", img)
-     .setDescription("재생 중인 음악을 건너뛰었어요.")
-     .setTimestamp()
-     .setFooter('MD BOT',mdlog)
- 
-     serverQueue.textChannel.send(embed);
- }
- 
- function stop(message, serverQueue) {
-   if (!message.member.voice.channel)
-   
-   return message.channel.send(joinerr);
+                    message.channel.send(listing)
+                
+                })
+                .catch((error) => {
+                  console.error(error)
+                })
+            }
      
-   if (!serverQueue)
-  
-   return message.channel.send(stoperr);
-     
-   serverQueue.songs = [];
-   serverQueue.connection.dispatcher.end();
-   let embed = new Discord.MessageEmbed()
-     .setColor("#13ad65")
-     .setAuthor("알트 봇", img)
-     .setDescription("재생 중인 음악을 멈췄어요.")
-     .setTimestamp()
-     .setFooter('MD BOT',mdlog)
- 
- 
-     serverQueue.textChannel.send(embed);
- }
- 
- function play(guild, song) {
-   const serverQueue = queue.get(guild.id);
-   if (!song) {
-     serverQueue.voiceChannel.leave();
-     queue.delete(guild.id);
-     return;
-   }
- 
-   const dispatcher = serverQueue.connection
-     .play(ytdl(song.url))
-     .on("finish", () => {
-       serverQueue.songs.shift();
-       play(guild, serverQueue.songs[0]);
-     })
-     .on("error", error => console.error(error));
-   dispatcher.setVolumeLogarithmic(serverQueue.volume / 5);
+         } else {
+          if(search.all[0].type == `video`) {
+          const videos = search.videos.slice( 0, 1 )
+          videos.forEach(async function(v){
+         
+              const views = String(v.views).padStart(10, '')
+              const playing = new Discord.MessageEmbed()
+              .setTitle("**"+v.title+"**")
+              .setColor("#13ad65")
+              .setImage(v.thumbnail)
+              .addFields(
+                  {name:'**업로더**',value:`[${v.author.name}](${v.author.url})`,inline:true},
+                  {name:'**길이**',value:v.timestamp, inline:true},
+                  {name:'**조회수**',value:views, inline:true}
+              )
+              .setAuthor("알트 봇", img)
+              .setTimestamp()
+              .setFooter('MD BOT',mdlog)
+              .setDescription('유튜브에서 노래를 재생했어요.')
 
-   let embed = new Discord.MessageEmbed()
-     .setColor("#13ad65")
-     .setAuthor("알트 봇", img)
-     .setTitle(song.title)
-     .setThumbnail(song.img)
-     .setDescription("이 지금 재생중이에요.")
-     .setTimestamp()
-     .setFooter('MD BOT',mdlog)
- 
-     serverQueue.textChannel.send(embed);
- }
+              message.channel.send(playing)
+              const urls = v.url
+              play(urls, connection, message);
+
+              const SoundQueue = {
+                url : [v.url],
+                name : [v.thumbnail],
+                author : [v.author.name]
+               }
+            queue.set(message.guild.id,SoundQueue);
+          
+          })
+        } else if(search.all[0].type == `list`) {
+                
+            const url = search.all[0].listId
+            ps.getPlaylistItems(url)
+            .then((result) => {
+         //       console.log(result)
+                const SoundQueue = {
+                    url : [],
+                    name : [],
+                    author : []
+                   }
+                   
+                play(result.items[0].videoUrl,connection,message)
+                for(var database of Object.values(result.items)) {
+               //     console.log(database)
+                    SoundQueue.url.push(database.videoUrl)
+                    SoundQueue.name.push(database.title)
+                    SoundQueue.author.push(search.all[0].author.name) 
+
+                }  
+                queue.set(message.guild.id,SoundQueue);
+             //   console.log(`https://img.youtube.com/vi/${result.items[1].videoId}/mqdefault.jpg`)
+                const listing = new Discord.MessageEmbed()
+                .setTitle("**"+search.all[0].title+"**")
+                .setColor("#13ad65")
+                .setImage(`https://img.youtube.com/vi/${result.items[0].videoId}/mqdefault.jpg`)
+                .addFields(
+                    {name:'**제작**',value:`[${search.all[0].author.name}](${search.all[0].author.url})`,inline:true},
+                    {name:'**수록된 곡**',value:search.all[0].videoCount, inline:true}
+                )
+                .setAuthor("알트 봇", img)
+                .setTimestamp()
+                .setFooter('MD BOT',mdlog)
+                .setDescription('앨범/목록에 있는 첫 음악을 재생하고, 나머지를 대기열에 추가했어요.')
+
+                message.channel.send(listing)
+            
+            })
+            .catch((error) => {
+              console.error(error)
+            })
+        }
+      }
+        
+    }
+    
+    
+      } else {
+        const joinerr = new Discord.MessageEmbed() 
+        joinerr.setColor("#d9534f")
+        joinerr.setAuthor("알트 봇", img)
+        joinerr.setTitle("음성 채널 입장")
+        joinerr.setDescription("먼저, 음성 채널에 입장해 주세요!")
+        joinerr.setTimestamp()
+        joinerr.setFooter('MD BOT',mdlog)
+
+        message.channel.send(joinerr)
+      }
+  }
+  if(message.content.startsWith("알트야 나가"||"알트야 멈춰")){
+      if(!message.guild.me.voice.channel){
+      
+        const joinerr = new Discord.MessageEmbed() 
+        joinerr.setColor("#d9534f")
+        joinerr.setAuthor("알트 봇", img)
+        joinerr.setTitle("이미 나감")
+        joinerr.setDescription("저는 이미 음성채널을 나갔어요.")
+        joinerr.setTimestamp()
+        joinerr.setFooter('MD BOT',mdlog)
+
+        message.channel.send(joinerr)
+      }else if(!message.member.voice.channel){
+        const joinerr = new Discord.MessageEmbed() 
+        joinerr.setColor("#d9534f")
+        joinerr.setAuthor("알트 봇", img)
+        joinerr.setTitle("음성 채널 입장")
+        joinerr.setDescription("먼저, 음성 채널에 입장해 주세요!")
+        joinerr.setTimestamp()
+        joinerr.setFooter('MD BOT',mdlog)
+
+        message.channel.send(joinerr)
+      }else if(!queue.get(message.guild.id)) {
+        const joinerr = new Discord.MessageEmbed() 
+        joinerr.setColor("#d9534f")
+        joinerr.setAuthor("알트 봇", img)
+        joinerr.setTitle("재생 중이 아님")
+        joinerr.setDescription("지금 노래가 재생중이지 않은거 같아요.")
+        joinerr.setTimestamp()
+        joinerr.setFooter('MD BOT',mdlog)
+
+        message.channel.send(joinerr)
+      }else{
+          message.member.voice.channel.leave();
+          queue.delete(message.guild.id)
+          const joinerr = new Discord.MessageEmbed() 
+          joinerr.setColor("#50fd50")
+          joinerr.setAuthor("알트 봇", img)
+          joinerr.setDescription("음성채널을 나가고, 대기열을 초기화했어요.")
+          joinerr.setTimestamp()
+          joinerr.setFooter('MD BOT',mdlog)
+
+            message.channel.send(joinerr)
+      }
+  }
+  if(message.content.startsWith("알트야 들어와"||"알트야 입장")){
+      if(!message.member.voice.channel){
+        const joinerr = new Discord.MessageEmbed() 
+        joinerr.setColor("#d9534f")
+        joinerr.setAuthor("알트 봇", img)
+        joinerr.setTitle("음성 채널 입장")
+        joinerr.setDescription("먼저, 음성 채널에 입장해 주세요!")
+        joinerr.setTimestamp()
+        joinerr.setFooter('MD BOT',mdlog)
+
+        message.channel.send(joinerr)
+      }else{
+          await message.member.voice.channel.join();
+          const joinerr = new Discord.MessageEmbed() 
+          joinerr.setColor("#50fd50")
+          joinerr.setAuthor("알트 봇", img)
+          joinerr.setDescription("음성채널에 입장했어요.")
+          joinerr.setTimestamp()
+          joinerr.setFooter('MD BOT',mdlog)
+
+        message.channel.send(joinerr)
+      }
+  }  if(message.content.startsWith("알트야 스킵")){
+    if(!message.member.voice.channel){
+      const joinerr = new Discord.MessageEmbed() 
+      joinerr.setColor("#d9534f")
+      joinerr.setAuthor("알트 봇", img)
+      joinerr.setTitle("음성 채널 입장")
+      joinerr.setDescription("먼저, 음성 채널에 입장해 주세요!")
+      joinerr.setTimestamp()
+      joinerr.setFooter('MD BOT',mdlog)
+
+      message.channel.send(joinerr)
+    }else if(!queue.get(message.guild.id)) {
+      const joinerr = new Discord.MessageEmbed() 
+      joinerr.setColor("#d9534f")
+      joinerr.setAuthor("알트 봇", img)
+      joinerr.setTitle("재생 중이 아님")
+      joinerr.setDescription("지금 노래가 재생중이지 않은거 같아요.")
+      joinerr.setTimestamp()
+      joinerr.setFooter('MD BOT',mdlog)
+
+      message.channel.send(joinerr)
+    }else{
+      const connection = await message.member.voice.channel.join();
+      queue.get(message.guild.id).url.shift();
+      queue.get(message.guild.id).name.shift();
+      queue.get(message.guild.id).author.shift();
+
+      const urls = queue.get(message.guild.id).url[0]
+
+      play(urls, connection, message)
+        const joinerr = new Discord.MessageEmbed() 
+        joinerr.setColor("#50fd50")
+        joinerr.setAuthor("알트 봇", img)
+        joinerr.setDescription("음성채널을 나갔어요.")
+        joinerr.setTimestamp()
+        joinerr.setFooter('MD BOT',mdlog)
+
+          message.channel.send(joinerr)
+    }
+  }
+})
+
+function play(urls, connection, message) {
+    connection.play(ytdl(urls,{filter:'audioonly'})).on('finish',()=>{
+      
+      if(Object.values(queue.get(message.guild.id).url).length == 1) {
+        const end = new Discord.MessageEmbed()
+        .setColor("#50fd50")
+        .setAuthor("알트 봇", img)
+        .setDescription("모든 음악의 재생이 멈췄어요.")
+        .setTimestamp()
+        .setFooter('MD BOT',mdlog)
+        message.reply(end)
+        queue.delete(message.guild.id)
+       // message.channel.send("false")
+        message.member.voice.channel.leave();
+        //console.log("system done")
+      } else {
+          queue.get(message.guild.id).url.shift();
+          queue.get(message.guild.id).name.shift();
+          queue.get(message.guild.id).author.shift();
+          const urls = queue.get(message.guild.id).url[0]
+     //     message.channel.send("true")
+        //  console.log("list done")
+          play(urls, connection, message)
+      }
+    })
+}
+
 
    client.on("message", (message) => {
     if(message.author.bot) return;

@@ -23,3 +23,10 @@ data.data.shift();
 
 
 console.log(Object.values(data).length)
+
+const SoundeQueue = {
+    sound : []
+   }
+
+SoundeQueue.sound.push("eekta")
+console.log(SoundeQueue)
