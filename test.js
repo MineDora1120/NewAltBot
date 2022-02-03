@@ -35,12 +35,15 @@ client.on("message", async(msg) => {
        
           const connection = await msg.member.voice.channel.join();
           const search = await yts(args.join(" "))
+     //     console.log(search)
         // console.log(search.all)
          if (queue.get(msg.guild.id)) {
             let send = queue.get(msg.guild.id)
             const videos = search.videos.slice( 0, 1 )
+            if(search.all[0].type == `video`) {
             videos.forEach(async function(v){
-           
+                
+                    console.log("video")
                 const views = String(v.views).padStart(10, '')
                 const listing = new Discord.MessageEmbed()
                 .setTitle("**"+v.title+"**")
@@ -58,8 +61,41 @@ client.on("message", async(msg) => {
                 send.url.push(v.url)
                 send.name.push(v.thumbnail)
                 send.author.push(v.author.name)
+                
             })
+              } else if(search.all[0].type == `list`) {
+                
+                const url = search.all[0].listId
+                console.log("done")
+                ps.getPlaylistItems(url)
+                .then((result) => {
+                 if(queue.get(msg.guild.id)) {
+                    let send = queue.get(msg.guild.id)
+                    console.log(result)
+                    for(var database of Object.values(result.items)) {
+                        console.log(database)
+                        send.url.push(database.videoUrl)
+                        send.name.push(database.title)
+                        send.author.push(search.all[0].author.name) 
+    
+                    }  const listing = new Discord.MessageEmbed()
+                    .setTitle("**"+search.all[0].title+"**")
+                    .setColor(0x4169e1)
+                    .setImage(`https://img.youtube.com/vi/${result.items[0].videoID}/mqdefault.jpg`)
+                    .addFields(
+                        {name:'**제작**',value:`[${search.all[0].author.name}](${search.all[0].author.url})`,inline:true},
+                        {name:'**수록된 곡**',value:search.all[0].videoCount, inline:true}
+                    )
+                    .setDescription('앨범/목록이 대기열에 추가되었어요.')
+                }
+                })
+                .catch((error) => {
+                  console.error(error)
+                })
+            }
+     
          } else {
+            
           if(search.all[0].type == `video`) {
           const videos = search.videos.slice( 0, 1 )
           videos.forEach(async function(v){
@@ -78,7 +114,7 @@ client.on("message", async(msg) => {
 
               msg.channel.send(playing)
               const urls = v.url
-              play(urls, connection, msg)
+              play(urls, connection, msg);
 
               const SoundQueue = {
                 url : [v.url],
@@ -88,22 +124,35 @@ client.on("message", async(msg) => {
             queue.set(msg.guild.id,SoundQueue);
           
           })
-        } else if(search.all[0].type == "list") {
-            console.log(search.all)
+        } else if(search.all[0].type == `list`) {
+                
             const url = search.all[0].listId
-      
+            console.log("done")
             ps.getPlaylistItems(url)
             .then((result) => {
-                for (const video of Object.values(result.items)) {
-             
-                } console.log("done!")
+             if(queue.get(msg.guild.id)) {
+                let send = queue.get(msg.guild.id)
+                console.log(result)
+                for(var database of Object.values(result.items)) {
+                    console.log(database)
+                    send.url.push(database.videoUrl)
+                    send.name.push(database.title)
+                    send.author.push(search.all[0].author.name) 
+
+                }  const listing = new Discord.MessageEmbed()
+                .setTitle("**"+search.all[0].title+"**")
+                .setColor(0x4169e1)
+                .setImage(`https://img.youtube.com/vi/${result.items[0].videoID}/mqdefault.jpg`)
+                .addFields(
+                    {name:'**제작**',value:`[${search.all[0].author.name}](${search.all[0].author.url})`,inline:true},
+                    {name:'**수록된 곡**',value:search.all[0].videoCount, inline:true}
+                )
+                .setDescription('앨범/목록에 있는 첫 음악을 재생하고, 나머지를 대기열에 추가했어요.')
+            }
             })
             .catch((error) => {
               console.error(error)
             })
-
-        
-      
         }
     }
     
