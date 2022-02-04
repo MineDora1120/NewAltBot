@@ -2,11 +2,9 @@ console.log("스크립트를 읽는중...")
 const Discord = require('discord.js');
 const client = new Discord.Client();
 const fs = require('fs')
-const infopath = `./package.json`;
-const info = JSON.parse(fs.readFileSync(infopath, "utf-8"));
 //const path = require('path')
 const ytdl = require('ytdl-core');
-const dev = "true" //테스트 서버 사용, true 사용 하지 않음 false
+const dev = "false" //테스트 서버 사용, true 사용 하지 않음 false
 const request = require('request')
 const mdlog = "https://static.wixstatic.com/media/bcc14d_14c8ed70b93447c6acda2a536bdaac78~mv2.jpg/v1/fill/w_134,h_134,al_c,q_80,usm_0.66_1.00_0.01/images.webp"
 const img = "https://static.wixstatic.com/media/bcc14d_3e3c3489f7dd45759fc0d6b01fe1a270~mv2.jpg/v1/fill/w_339,h_313,al_c,q_80,usm_0.66_1.00_0.01/KakaoTalk_20210804_170059173.webp"
@@ -19,39 +17,6 @@ const { release } = require('os');
 //const { url } = require('inspector');
 //YouTube Data API v3 개인key값
 
-//음악 관련 오류 명령어
-
-const joinerr = new Discord.MessageEmbed() 
-joinerr.setColor("#d9534f")
-joinerr.setAuthor("알트 봇", img)
-joinerr.setTitle("음성 채널 입장")
-joinerr.setDescription("먼저, 음성 채널에 입장해 주세요!")
-joinerr.setTimestamp()
-joinerr.setFooter('MD BOT',mdlog)
-
-const skiperr = new Discord.MessageEmbed()
-skiperr.setColor("#d9534f")
-skiperr.setAuthor("알트 봇", img)
-skiperr.setTitle("스킵 오류")
-skiperr.setDescription("스킵 할 수 있는 음악이 없어요.")
-skiperr.setTimestamp()
-skiperr.setFooter('MD BOT',mdlog)
-
-const stoperr = new Discord.MessageEmbed()
-stoperr.setColor("#d9534f")
-stoperr.setAuthor("알트 봇", img)
-stoperr.setTitle("정지 오류")
-stoperr.setDescription("정지 할 수 있는 음악이 없어요.")
-stoperr.setTimestamp()
-stoperr.setFooter('MD BOT',mdlog)
-
-const listerr = new Discord.MessageEmbed()
-listerr.setColor("#d9534f")
-listerr.setAuthor("알트 봇", img)
-listerr.setTitle("목록 표시 오류")
-listerr.setDescription("아직 대기열에 있는 음악을 감지하지 못했어요.")
-listerr.setTimestamp()
-listerr.setFooter('MD BOT',mdlog)
 
 //API 오류 명령어
 let apierr = new Discord.MessageEmbed()
@@ -68,7 +33,7 @@ releases.setColor("#9acd32")
 releases.setAuthor("알트 봇", img)
 releases.setTitle("현재 릴리즈")
 releases.setThumbnail("https://media.discordapp.net/attachments/730055025824628748/937663826004947054/KakaoTalk_20220123_121521490.jpg?width=671&height=671")
-releases.addField("Version", "0.9.2-dev", true)
+releases.addField("Version", "2.0.1-true", true)
 releases.addField("discord.js", "12.5.4", true)
 releases.addField("node.js", "6.14.15", true)
 releases.addField("ytdl-core", "4.10.0", true)
@@ -79,10 +44,21 @@ releases.setDescription("이 알트봇 시스템은 Public 버전입니다.")
 } else {
   releases.setDescription("이 알트봇 시스템은 Dev 버전입니다. 불안정할 수 있습니다.")
  // message.reply("이 버전을 사용하는건 개발자가 아니면 매우 위험합니다. 모든 오류의 책임은 본인에게 있습니다.")
+}
 releases.setTimestamp()
 releases.setFooter('MD BOT',mdlog)
-}
-     
+
+const note = JSON.parse(fs.readFileSync('./patchnote.json', "utf-8"));
+
+const patchnote = new Discord.MessageEmbed()
+patchnote.setColor("#9acd32")
+patchnote.setAuthor("알트 봇", img)
+patchnote.setTitle("📘 | 패치노트")
+patchnote.setThumbnail("https://media.discordapp.net/attachments/730055025824628748/937663826004947054/KakaoTalk_20220123_121521490.jpg?width=671&height=671")
+patchnote.setDescription(note.note)
+patchnote.setTimestamp()
+patchnote.setFooter('MD BOT',mdlog)
+
 //가위바위보 관련 명령어
 
 const convertEmoji = (who) => {
@@ -122,8 +98,10 @@ client.on("message", (message) => {
      return;
    }
   } 
-
-if(message.content.startsWith("알트야 도움")) {
+if (message.content.includes(`알트야 패치노트`)) {
+ message.channel.send(patchnote)
+}
+else if(message.content.startsWith("알트야 도움")) {
  message.member.user.send(`
  __** 💾 알트 봇 명령어:**__
 
@@ -162,6 +140,7 @@ if(message.content.startsWith("알트야 도움")) {
   ** > 알트봇 릴리즈 정보 명령어 **
   - 알트야 릴리즈 - 현재 릴리즈 정보를 표시해요.
   - 알트야 개발자 - 마도#8614에요.
+  - 알트야 패치노트 - 패치노트를 로드해요.
  `).catch(console.error); 
  message.channel.send("✅ DM을 확인해 주세요!")
     } else if (message.content.startsWith("알트야 청소")) {
@@ -1046,7 +1025,8 @@ if(message.content.startsWith("알트야 도움")) {
 })
 
 
-const PlaylistSummary = require('youtube-playlist-summary')
+const PlaylistSummary = require('youtube-playlist-summary');
+const { patch } = require('request');
 
 const config = {
     GOOGLE_API_KEY: 'AIzaSyCNnMvLcoWfHhnsIXF2LtIBHYpJylhv7iY', // require
