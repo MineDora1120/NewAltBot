@@ -1061,7 +1061,7 @@ const queue = new Map();
 
 client.on("message", async(message) => {
   if(message.content.startsWith("알트야 목록")) {
-    if (!serverQueue) { let embed = new Discord.MessageEmbed()
+    if (!queue.get(message.guild.id)) { let embed = new Discord.MessageEmbed()
           .setColor("#d9534f")
           .setAuthor("알트 봇", img)
           .setTitle("로드 오류")
@@ -1070,10 +1070,11 @@ client.on("message", async(message) => {
           .setFooter('MD BOT',mdlog)
           return message.channel.send(embed) }
     let embed = new Discord.MessageEmbed();
+    let maps = queue.get(message.guild.id).name
     embed.setColor("#13ad65")
     embed.setAuthor("알트 봇", "https://static.wixstatic.com/media/bcc14d_3e3c3489f7dd45759fc0d6b01fe1a270~mv2.jpg/v1/fill/w_339,h_313,al_c,q_80,usm_0.66_1.00_0.01/KakaoTalk_20210804_170059173.webp")
-    embed.setDescription(`${queue.song.map(queue => `**-** ${queue.title}`).join('\n')}`)
-    embed.setTitle(`**🎵 현재 재생중 : ** ${queue.title[0]}`)
+    embed.setDescription(`${maps.map(maps => `** ▷** ${maps}`).join('\n')}`)
+    embed.setTitle(`**🎵 현재 재생중 : ** ${queue.get(message.guild.id).name[0]}`)
     embed.setTimestamp()
     embed.setFooter('MD BOT',mdlog)
 
@@ -1132,7 +1133,7 @@ client.on("message", async(message) => {
                 message.channel.send(listing)
 
                 send.url.push(v.url)
-                send.name.push(v.thumbnail)
+                send.name.push(v.title)
                 send.author.push(v.author.name)
                 
             })
@@ -1198,7 +1199,7 @@ client.on("message", async(message) => {
 
               const SoundQueue = {
                 url : [v.url],
-                name : [v.thumbnail],
+                name : [v.title],
                 author : [v.author.name]
                }
             queue.set(message.guild.id,SoundQueue);
@@ -1263,7 +1264,7 @@ client.on("message", async(message) => {
         message.channel.send(joinerr)
       }
   }
-  if(message.content.startsWith("알트야 나가"||"알트야 멈춰")){
+  if(message.content.startsWith("알트야 나가")||message.content == "알트야 멈춰"){
       if(!message.guild.me.voice.channel){
       
         const joinerr = new Discord.MessageEmbed() 
@@ -1285,7 +1286,7 @@ client.on("message", async(message) => {
         joinerr.setFooter('MD BOT',mdlog)
 
         message.channel.send(joinerr)
-      }else if(!queue.get(message.guild.id)) {
+      }else if(queue.get(message.guild.id).name[0] == undefined) {
         const joinerr = new Discord.MessageEmbed() 
         joinerr.setColor("#d9534f")
         joinerr.setAuthor("알트 봇", img)
@@ -1308,7 +1309,7 @@ client.on("message", async(message) => {
             message.channel.send(joinerr)
       }
   }
-  if(message.content.startsWith("알트야 들어와"||"알트야 입장")){
+  if(message.content == "알트야 들어와" || message.content == "알트야 입장"){
       if(!message.member.voice.channel){
         const joinerr = new Discord.MessageEmbed() 
         joinerr.setColor("#d9534f")
@@ -1346,24 +1347,34 @@ client.on("message", async(message) => {
       joinerr.setColor("#d9534f")
       joinerr.setAuthor("알트 봇", img)
       joinerr.setTitle("재생 중이 아님")
-      joinerr.setDescription("지금 노래가 재생중이지 않은거 같아요.")
+      joinerr.setDescription("지금 음악이 재생중이지 않은거 같아요.")
       joinerr.setTimestamp()
       joinerr.setFooter('MD BOT',mdlog)
 
       message.channel.send(joinerr)
-    }else{
+    }else if(queue.get(message.guild.id).name[1] == undefined) {
+      const joinerr = new Discord.MessageEmbed() 
+      joinerr.setColor("#d9534f")
+      joinerr.setAuthor("알트 봇", img)
+      joinerr.setTitle("스킵 할 수 없음")
+      joinerr.setDescription("대기열이 부족하여 스킵할 수 없어요. 대신 멈추기 기능을 사용해주세요!")
+      joinerr.setTimestamp()
+      joinerr.setFooter('MD BOT',mdlog)
+
+      message.channel.send(joinerr)
+    } else{
       const connection = await message.member.voice.channel.join();
       queue.get(message.guild.id).url.shift();
       queue.get(message.guild.id).name.shift();
       queue.get(message.guild.id).author.shift();
 
       const urls = queue.get(message.guild.id).url[0]
-
+   //   console.log(queue.get(message.guild.id).name[1] == undefined)
       play(urls, connection, message)
         const joinerr = new Discord.MessageEmbed() 
         joinerr.setColor("#50fd50")
         joinerr.setAuthor("알트 봇", img)
-        joinerr.setDescription("음성채널을 나갔어요.")
+        joinerr.setDescription("재생 중이던 노래를 스킵했어요.")
         joinerr.setTimestamp()
         joinerr.setFooter('MD BOT',mdlog)
 
