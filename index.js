@@ -4,7 +4,7 @@ const client = new Discord.Client();
 const fs = require('fs')
 //const path = require('path')
 const ytdl = require('ytdl-core');
-const dev = "false" //테스트 서버 사용, true 사용 하지 않음 false
+const dev = "true" //테스트 서버 사용, true 사용 하지 않음 false
 const request = require('request')
 const mdlog = "https://static.wixstatic.com/media/bcc14d_14c8ed70b93447c6acda2a536bdaac78~mv2.jpg/v1/fill/w_134,h_134,al_c,q_80,usm_0.66_1.00_0.01/images.webp"
 const img = "https://static.wixstatic.com/media/bcc14d_3e3c3489f7dd45759fc0d6b01fe1a270~mv2.jpg/v1/fill/w_339,h_313,al_c,q_80,usm_0.66_1.00_0.01/KakaoTalk_20210804_170059173.webp"
@@ -1053,7 +1053,7 @@ client.on("message", async(message) => {
     let maps = queue.get(message.guild.id).name
     embed.setColor("#13ad65")
     embed.setAuthor("알트 봇", "https://static.wixstatic.com/media/bcc14d_3e3c3489f7dd45759fc0d6b01fe1a270~mv2.jpg/v1/fill/w_339,h_313,al_c,q_80,usm_0.66_1.00_0.01/KakaoTalk_20210804_170059173.webp")
-    embed.setDescription(`${maps.map(maps => `** ▷** ${maps}`).join('\n')}`)
+    embed.setDescription(`${maps.map(maps => `** ▶** ${maps}`).join('\n')}`)
     embed.setTitle(`**🎵 현재 재생중 : ** ${queue.get(message.guild.id).name[0]}`)
     embed.setTimestamp()
     embed.setFooter('MD BOT',mdlog)
@@ -1073,14 +1073,14 @@ client.on("message", async(message) => {
           message.reply(embed2)
 
       } else if (message.member.voice.channel) {
-       
+     
           const connection = await message.member.voice.channel.join();
           const search = await yts(args.join(" "))
-          if(search.all.length < 3) {
+          if(search.all[0].length < 3) {
             const embed2 = new Discord.MessageEmbed()
             .setTitle('**노래를 찾지 못했어요. 다른 검색어로 다시 시도해주세요.**')
             .setColor('RED')
-            .setAuthor("알트 봇", img)
+            .setAuthor("알트 봇", img)  
             .setTimestamp()
             .setFooter('MD BOT',mdlog)
             
@@ -1088,12 +1088,11 @@ client.on("message", async(message) => {
           } else {
      //     console.log(search)
         // console.log(search.all)
-         if (queue.get(message.guild.id)) {
+          if (queue.get(message.guild.id)) {
             let send = queue.get(message.guild.id)
             const videos = search.videos.slice( 0, 1 )
             if(search.all[0].type == `video`) {
             videos.forEach(async function(v){
-                
                //     console.log("video")
                 const views = String(v.views).padStart(10, '')
                 const listing = new Discord.MessageEmbed()
@@ -1120,7 +1119,7 @@ client.on("message", async(message) => {
               } else if(search.all[0].type == `list`) {
                 
                 const url = search.all[0].listId
-            //    console.log("done")
+               //    console.log("done")
                 ps.getPlaylistItems(url)
                 .then((result) => {
                  
@@ -1151,10 +1150,11 @@ client.on("message", async(message) => {
                 .catch((error) => {
                   console.error(error)
                 })
-            }
-     
+              }
          } else {
+        
           if(search.all[0].type == `video`) {
+
           const videos = search.videos.slice( 0, 1 )
           videos.forEach(async function(v){
          
@@ -1196,8 +1196,9 @@ client.on("message", async(message) => {
                     name : [],
                     author : []
                    }
-                   
-                play(result.items[0].videoUrl,connection,message)
+                const urls = result.items[0].videoUrl
+               // console.log(urls)
+                play(urls ,connection,message)
                 for(var database of Object.values(result.items)) {
                //     console.log(database)
                     SoundQueue.url.push(database.videoUrl)
@@ -1228,6 +1229,7 @@ client.on("message", async(message) => {
             })
         }
       }
+
         
     }
     
@@ -1280,7 +1282,7 @@ client.on("message", async(message) => {
           message.member.voice.channel.leave();
           queue.delete(message.guild.id)
           const joinerr = new Discord.MessageEmbed() 
-          joinerr.setColor("#50fd50")
+          joinerr.setColor("#13ad65")
           joinerr.setAuthor("알트 봇", img)
           joinerr.setDescription("음성채널을 나가고, 대기열을 초기화했어요.")
           joinerr.setTimestamp()
@@ -1303,7 +1305,7 @@ client.on("message", async(message) => {
       }else{
           await message.member.voice.channel.join();
           const joinerr = new Discord.MessageEmbed() 
-          joinerr.setColor("#50fd50")
+          joinerr.setColor("#13ad65")
           joinerr.setAuthor("알트 봇", img)
           joinerr.setDescription("음성채널에 입장했어요.")
           joinerr.setTimestamp()
@@ -1352,7 +1354,7 @@ client.on("message", async(message) => {
    //   console.log(queue.get(message.guild.id).name[1] == undefined)
       play(urls, connection, message)
         const joinerr = new Discord.MessageEmbed() 
-        joinerr.setColor("#50fd50")
+        joinerr.setColor("#13ad65")
         joinerr.setAuthor("알트 봇", img)
         joinerr.setDescription("재생 중이던 노래를 스킵했어요.")
         joinerr.setTimestamp()
@@ -1368,7 +1370,7 @@ function play(urls, connection, message) {
       
       if(Object.values(queue.get(message.guild.id).url).length == 1) {
         const end = new Discord.MessageEmbed()
-        .setColor("#50fd50")
+        .setColor("#13ad65")
         .setAuthor("알트 봇", img)
         .setDescription("모든 음악의 재생이 멈췄어요.")
         .setTimestamp()
@@ -1387,134 +1389,47 @@ function play(urls, connection, message) {
         //  console.log("list done")
           play(urls, connection, message)
       }
+    }).on('error', (error) => {
+   //   message.delete();
+      const joinerr = new Discord.MessageEmbed() 
+      joinerr.setColor("#d9534f")
+      joinerr.setAuthor("알트 봇", img)
+      joinerr.setTitle("재생 오류")
+      joinerr.setDescription(`이 음악은 유튜브에 의해 검열당했어요. ${error}다음 노래를 재생할게요.`)
+      joinerr.setTimestamp()
+      joinerr.setFooter('MD BOT',mdlog)
+
+      message.channel.send(joinerr)
+
+      if(queue.get(message.guild.id).name[1] == undefined) {
+        const joinerr = new Discord.MessageEmbed() 
+        joinerr.setColor("#d9534f")
+        joinerr.setAuthor("알트 봇", img)
+        joinerr.setTitle("스킵 할 수 없음")
+        joinerr.setDescription("대기열이 부족하여 스킵할 수 없었어요. 음악 재생을 멈출게요.")
+        joinerr.setTimestamp()
+        joinerr.setFooter('MD BOT',mdlog)
+  
+        message.channel.send(joinerr)
+
+        message.member.voice.channel.leave();
+        queue.delete(message.guild.id)
+
+      } else {
+        message.member.voice.channel.join();
+        queue.get(message.guild.id).url.shift();
+        queue.get(message.guild.id).name.shift();
+        queue.get(message.guild.id).author.shift();
+  
+        const urls = queue.get(message.guild.id).url[0]
+     //   console.log(queue.get(message.guild.id).name[1] == undefined)
+   
+        play(urls, connection, message)
+    
+      }
     })
 }
 
-
-   client.on("message", (message) => {
-    if(message.author.bot) return;
-    if(message.guild.id == "842640836084629514"){
-
-    if (message.content.startsWith("//도움")) {
-    //  console.log(message.author.id + "님이 도움말 로드")
-        let img = "https://media.discordapp.net/attachments/802180575376179285/830093931780767815/89020687_p0_2.jpg?width=676&height=676"
-        let alsoimg = "https://media.discordapp.net/attachments/802180575376179285/830000059771912232/89003369_p0_master1200.png?width=478&height=676"
-        let embed = new Discord.MessageEmbed()
-        .setTitle("이타도리 봇 도움말")
-        .setColor("#13ad65")
-        .setAuthor("이타도리", alsoimg)
-        .setThumbnail(img)
-        .addFields()
-        .addField("//짤", "이 방에 있는 친구들의 짤을 로드합니다", true)
-        .addFields()
-        .setTimestamp()
-        .setFooter('MD BOT',mdlog)
-
-        message.channel.send(embed)
-    } if (message.content.includes('//짤')) {
-      //console.log(message.author.id + "님이 짤 로드")
-      switch (Math.floor((Math.random() * 24  ) + 1)) {
-       case 1:
-          message.reply("로블록스를 하고 있는 이수현 짤을 로드했어요.")
-          message.channel.send("https://media.discordapp.net/attachments/802180575376179285/830088871115096124/20210324_083247_HDR.jpg?width=304&height=676")
-          break;
-       case 2:
-          message.reply("말도 안되게 잘생긴 김민수 사진을 로드했어요.")
-          message.channel.send("https://media.discordapp.net/attachments/740552787229671424/830086388577468517/KakaoTalk_20200315_124734869.jpg?width=507&height=676")
-          break;
-       case 3:
-          message.reply("김민수 사진2 을(를) 로드했어요.")
-          message.channel.send("https://media.discordapp.net/attachments/802180575376179285/830086890828595221/unknown.png?width=1205&height=676")
-          break;
-       case 4:
-          message.reply("순진했던 성진이 사진을 로드했어요")
-          message.channel.send("https://media.discordapp.net/attachments/730055025824628748/874896490181558352/20210811_150520_HDR.jpg?width=1440&height=648")
-          break;
-       case 5:
-          message.reply("스트리머 장수관 사진을 로드했어요.")
-          message.channel.send("https://media.discordapp.net/attachments/802180575376179285/830090548114358332/unknown.png?width=1017&height=676")
-          break;
-       case 6:
-          message.reply("수현이가 로블록스 안해줘서 기다리는 윤지환 사진을 로드했어요.")
-          message.channel.send("https://media.discordapp.net/attachments/666210435061514250/817771402835787816/unknown.png")
-          break;
-        case 7:
-         message.reply("행복한 꿈을 꾸는 수민이 사진을 로드헀어요")
-         message.channel.send("https://media.discordapp.net/attachments/730055025824628748/874893098570887228/20210619_195207.png?width=935&height=701")
-         break;
-        case 8:
-         message.reply("더위 때문에 짜증난 민찬이 사진을 로드했어요.")
-         message.channel.send("https://media.discordapp.net/attachments/730055025824628748/874893116375719946/KakaoTalk_20210810_020030704.png")
-         break;
-       case 9:
-         message.reply("일본 가기 싫었는데 끌려가서 슬픈 세현이 사진을 로드했어요.")
-         message.channel.send("https://media.discordapp.net/attachments/730055025824628748/874894647124701264/received_1857090291264584_2.jpeg?width=445&height=701")
-         break;
-       case 10:
-         message.reply("순진했던 그때 그 시절 이도경 사진을 로드했어요.")
-         message.channel.send("https://media.discordapp.net/attachments/730055025824628748/874896493620891658/20210811_150509_HDR.jpg?width=1440&height=648")
-         break;
-       case 11:
-         message.reply("여친 생기는 꿈꿔서 진짜 생기는줄 아는 동훈이 사진을 로드했어요.")
-         message.channel.send("https://media.discordapp.net/attachments/872853419059187755/874898794905489448/Screenshot_20200927-221436_Gallery.jpg?width=332&height=701")
-         break;
-       case 12:
-         message.reply("깡패 민수 사진을 로드했어요.")
-         message.channel.send("https://media.discordapp.net/attachments/730055025824628748/876096641952809020/7e24ddecdf57cc98.png")
-         break;
-       case 13:
-        message.reply("창가에서 머리박고 햄버거 먹는 세현이 사진을 로드했어요.")
-        message.channel.send("https://media.discordapp.net/attachments/730055025824628748/876096775482654730/1611647499864.png?width=526&height=701")
-        break;
-       case 14:
-         message.reply("모기장에 갇힌 현우와 민규 사진을 로드했어요.")
-         message.channel.send("https://media.discordapp.net/attachments/842640836084629517/876097593132859392/20210619_190349.jpg?width=526&height=701")
-        break;
-       case 15:
-         message.reply("한심좌 사진을 로드했어요.")
-         message.channel.send("https://media.discordapp.net/attachments/790814628505583647/876096188196196442/FB_IMG_1620743448778.jpg")
-         break;
-       case 16:
-         message.reply("순진했던 그때 그 시절 김민수 사진을 로드했어요.")
-         message.channel.send("https://media.discordapp.net/attachments/730055025824628748/876099002179932160/401b49c4f023e0fb.png")
-         break;
-       case 17:
-         message.reply("개말린 김민규 사진을 로드했어요.")
-         message.channel.send("https://media.discordapp.net/attachments/730055025824628748/876099485305040926/FB_IMG_1582558070720.png?width=435&height=701")
-         break;
-       case 18:
-         message.reply("모모 수민이 사진을 로드했어요.")
-         message.channel.send("https://media.discordapp.net/attachments/730055025824628748/876099822917128212/20210619_195209.png?width=935&height=701")
-         break;
-       case 19:
-         message.reply("6학년 이도경 사진을 로드했어요.")
-         message.delete()
-         message.channel.send(":no_entry_sign: 개발자가 검열한 사진입니다. (Not Found: 404)")
-         break;
-       case 20:
-         message.reply("생일 파티하는 세현이와 친구들 사진을 로드했어요.")
-         message.channel.send("https://media.discordapp.net/attachments/730055025824628748/876100366922559548/20210814_224950.png")
-         break;
-        case 21:
-          message.reply("케이크를 에엑따하려는 세현이 사진을 로드했어요.")
-          message.channel.send("https://media.discordapp.net/attachments/730055025824628748/876100866988445716/20210814_225130.png")
-          break;
-        case 22:
-          message.reply("V를 하는 수민이 사진을 로드했어요.")
-          message.channel.send("https://media.discordapp.net/attachments/730055025824628748/876100885816692786/20210814_225123.png")
-          break;
-       case 23:
-          message.reply("졸업 사진을 찍는 세현이와 수민이 사진을 로드했어요.")
-          message.channel.send("https://media.discordapp.net/attachments/730055025824628748/876101429004238868/20200220_100214.png?width=935&height=701")
-         break;
-        case 24:
-          message.reply("TS된 민찬이 사진을 로드했어요.")
-          message.channel.send("https://media.discordapp.net/attachments/790814628505583647/876096340600434688/FB_IMG_1619511974979.jpg?width=581&height=701")
-          break;
-        }
-    } 
-  } 
-});
 console.log(`스크립트를 모두 읽었어요.`)
 console.log(`--------------------------------------------`)
 if(dev == "true") {
